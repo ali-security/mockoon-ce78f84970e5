@@ -32,9 +32,29 @@ describe('Relative file path', () => {
       );
 
       expect(escapeResult.data).to.contain(
-        'Error while serving the content: Access to relative path outside of the environment base directory'
+        'Error while serving the content: Access to relative path outside of the allowed base directory'
       );
       expect(escapeResult.data).to.not.contain('@mockoon/cli');
+    })
+    .do(async () => {
+      // relative templated file path staying within its static base (outside of the environment directory)
+      const result = await axios.get('http://localhost:3000/param2/file1', {
+        transformResponse: [(data) => data]
+      });
+
+      expect(result.data).to.contain('filecontent');
+
+      // relative templated file path escaping its static base
+      const escapeResult = await axios.get(
+        'http://localhost:3000/param2/..%2Fenvs%2Ffile1',
+        {
+          transformResponse: [(data) => data]
+        }
+      );
+
+      expect(escapeResult.data).to.contain(
+        'Error while serving the content: Access to relative path outside of the allowed base directory'
+      );
     })
     .finally(() => {
       process.emit('SIGINT');
